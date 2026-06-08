@@ -1,0 +1,4 @@
+interface:
+  display_name: "Print File"
+  short_description: "Prepare and print local documents safely from Codex."
+  default_prompt: "Print this file safely, checking printer settings, page size, and duplex options first."

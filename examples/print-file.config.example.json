@@ -1,0 +1,24 @@
+{
+  "default_printer": "lab-hp",
+  "printers": {
+    "lab-hp": {
+      "queue": "REPLACE_WITH_CUPS_QUEUE_NAME",
+      "uri": "ipp://REPLACE_WITH_PRINTER_HOST_OR_IP/ipp/print",
+      "model": "HP Laser MFP 136nw",
+      "driver": "IPP Everywhere",
+      "paper": "A4",
+      "auto_duplex": false,
+      "preferred_format": "image/urf",
+      "notes": [
+        "Direct PDF jobs may garble; convert to image/urf first.",
+        "True landscape A4 may crop; use normalize-a4-rotated-wide.",
+        "Use print-urf --cleanup --yes after conversion."
+      ],
+      "manual_duplex": {
+        "front": "odd pages in normal order",
+        "back": "even pages in reverse order",
+        "feed_note": "Confirm tray feed direction with a two-page test before full jobs."
+      }
+    }
+  }
+}
