@@ -16,6 +16,7 @@ description: Prepare and print local files from Codex on macOS/CUPS. Use when th
 - Treat `.urf` files as temporary spool artifacts. Use `print-urf --cleanup` after submitting jobs unless you explicitly need to keep the URF for debugging or reprinting.
 - For wide or landscape content on fragile IPP/URF printers, do not assume a true landscape A4 PDF will print correctly. Prefer a portrait A4 PDF with the content rotated and scaled onto the page.
 - For URF jobs, do not rely on CUPS/printer copy handling for multiple copies. Use `print-urf --copies N`; the helper submits N independent one-copy jobs because some IPP printers ignore `lp -n N` for `image/urf`.
+- Avoid enlarging smaller-than-A4 documents by default. Upscaling can make text and table lines look darker or "bold" after raster printing; only use `--allow-upscale` when the user explicitly wants the content enlarged.
 - For lab-specific printers, import a local config with `import-config`. Do not commit printer IPs, queue names, or site-specific feed notes to the public skill.
 
 ## Quick Workflow
@@ -112,7 +113,9 @@ Use this when PDF printing fails for specific pages, pages have mixed sizes, or 
 python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" normalize-a4 --file "<path>" --pages "13-15" --output "<new.pdf>"
 ```
 
-Then print the normalized output with `--paper A4 --fit`.
+The default preserves original page scale when the source page is smaller than A4, centering it on A4 paper. This reduces heavy-looking text caused by upscaling before URF rasterization. If the user explicitly wants small pages enlarged to fill A4, add `--allow-upscale`.
+
+Then print the normalized output with `--paper A4`.
 
 ## Wide Or Landscape Content
 

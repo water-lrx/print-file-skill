@@ -153,6 +153,7 @@ def normalize_pdf_to_a4_pages(
     pages: list[int],
     keep_annots: bool,
     rotate_wide: bool = False,
+    allow_upscale: bool = False,
 ) -> None:
     PdfReader, PdfWriter, Transformation = require_pypdf()
     reader = PdfReader(str(src))
@@ -168,11 +169,15 @@ def normalize_pdf_to_a4_pages(
             # Keep the output sheet portrait A4. Some IPP/URF paths crop true landscape pages.
             margin = 24
             scale = min((A4_W - 2 * margin) / height, (A4_H - 2 * margin) / width)
+            if not allow_upscale:
+                scale = min(scale, 1.0)
             x = (A4_W - height * scale) / 2 + height * scale
             y = (A4_H - width * scale) / 2
             transform = Transformation().rotate(90).scale(scale).translate(x, y)
         else:
             scale = min(A4_W / width, A4_H / height)
+            if not allow_upscale:
+                scale = min(scale, 1.0)
             x = (A4_W - width * scale) / 2
             y = (A4_H - height * scale) / 2
             transform = Transformation().scale(scale).translate(x, y)
@@ -182,11 +187,17 @@ def normalize_pdf_to_a4_pages(
         writer.write(fh)
 
 
-def normalize_pdf_to_a4(src: Path, out: Path, pages_spec: str | None, keep_annots: bool) -> None:
+def normalize_pdf_to_a4(
+    src: Path,
+    out: Path,
+    pages_spec: str | None,
+    keep_annots: bool,
+    allow_upscale: bool = False,
+) -> None:
     PdfReader, _, _ = require_pypdf()
     reader = PdfReader(str(src))
     pages = parse_pages(pages_spec, len(reader.pages)) or list(range(1, len(reader.pages) + 1))
-    normalize_pdf_to_a4_pages(src, out, pages, keep_annots)
+    normalize_pdf_to_a4_pages(src, out, pages, keep_annots, allow_upscale=allow_upscale)
 
 
 def cmd_normalize_a4(args: argparse.Namespace) -> int:
@@ -196,7 +207,7 @@ def cmd_normalize_a4(args: argparse.Namespace) -> int:
     if not is_pdf(src):
         raise SystemExit("normalize-a4 currently supports PDF input only.")
     out = Path(args.output).expanduser().resolve() if args.output else src.with_name(f"{src.stem}_A4.pdf")
-    normalize_pdf_to_a4(src, out, args.pages, args.keep_annots)
+    normalize_pdf_to_a4(src, out, args.pages, args.keep_annots, allow_upscale=args.allow_upscale)
     print(str(out))
     return 0
 
@@ -215,7 +226,14 @@ def cmd_normalize_a4_rotated_wide(args: argparse.Namespace) -> int:
         if args.output
         else src.with_name(f"{src.stem}_A4_rotated_wide.pdf")
     )
-    normalize_pdf_to_a4_pages(src, out, pages, args.keep_annots, rotate_wide=True)
+    normalize_pdf_to_a4_pages(
+        src,
+        out,
+        pages,
+        args.keep_annots,
+        rotate_wide=True,
+        allow_upscale=args.allow_upscale,
+    )
     print(str(out))
     return 0
 
@@ -376,6 +394,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--pages", help='Page list such as "1,3,5-8" or "14,12,10".')
     p.add_argument("--output")
     p.add_argument("--keep-annots", action="store_true")
+    p.add_argument("--allow-upscale", action="store_true", help="Allow small pages to be enlarged to fill A4.")
     p.set_defaults(func=cmd_normalize_a4)
 
     p = sub.add_parser(
@@ -386,6 +405,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--pages", help='Page list such as "1,3,5-8" or "14,12,10".')
     p.add_argument("--output")
     p.add_argument("--keep-annots", action="store_true")
+    p.add_argument("--allow-upscale", action="store_true", help="Allow small pages to be enlarged while rotating.")
     p.set_defaults(func=cmd_normalize_a4_rotated_wide)
 
     p = sub.add_parser("manual-duplex", help="Create front/back PDFs for manual duplex printing.")

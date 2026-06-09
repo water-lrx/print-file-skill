@@ -129,6 +129,8 @@ Normalize to A4:
 python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" normalize-a4 --file input.pdf --output input_A4.pdf
 ```
 
+By default, normalization centers smaller-than-A4 pages without enlarging them. This avoids making text and table lines look too dark after URF rasterization. Add `--allow-upscale` only when you intentionally want a small page enlarged to fill A4.
+
 Fix wide or landscape content before URF conversion:
 
 ```bash
@@ -158,6 +160,7 @@ python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" manual-duplex --f
 
 - PDF inspection before printing.
 - A4 normalization for mixed or awkward page sizes.
+- Scale-preserving A4 normalization to avoid bold-looking output from unnecessary upscaling.
 - URF conversion for IPP printers that garble direct PDFs.
 - Wide/landscape receipt handling to avoid right-side cropping.
 - Reliable multiple-copy URF printing by submitting separate one-copy jobs.
