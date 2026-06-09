@@ -313,18 +313,26 @@ def cmd_print_urf(args: argparse.Namespace) -> int:
     printer = resolve_printer(args.printer)
     if not printer:
         raise SystemExit("No printer provided and no default printer found.")
-    cmd = ["lp", "-d", printer, "-o", "document-format=image/urf"]
-    if args.copies:
-        cmd.extend(["-n", str(args.copies)])
+    copies = max(args.copies or 1, 1)
+    cmd = ["lp", "-d", printer, "-o", "document-format=image/urf", "-n", "1"]
     if args.paper:
         cmd.extend(["-o", f"media={args.paper}"])
+    if args.duplex == "long":
+        cmd.extend(["-o", "sides=two-sided-long-edge"])
+    elif args.duplex == "short":
+        cmd.extend(["-o", "sides=two-sided-short-edge"])
+    elif args.duplex == "off":
+        cmd.extend(["-o", "sides=one-sided"])
     cmd.append(str(path))
-    print(" ".join(shlex.quote(part) for part in cmd))
+    for copy_num in range(1, copies + 1):
+        prefix = f"[copy {copy_num}/{copies}] " if copies > 1 else ""
+        print(prefix + " ".join(shlex.quote(part) for part in cmd))
     if args.dry_run:
         return 0
     if not args.yes:
         raise SystemExit("Refusing to submit print job without --yes. Re-run with --yes after checking the command.")
-    subprocess.run(cmd, check=True)
+    for _ in range(copies):
+        subprocess.run(cmd, check=True)
     if args.cleanup:
         wait_seconds = max(args.cleanup_delay, 0)
         if wait_seconds:
@@ -411,6 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--printer")
     p.add_argument("--copies", type=int, default=1)
     p.add_argument("--paper", default="A4")
+    p.add_argument("--duplex", choices=["off", "long", "short"], default="off")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--yes", action="store_true", help="Submit the print job.")
     p.add_argument("--cleanup", action="store_true", help="Delete the URF file after lp accepts the job.")

@@ -15,6 +15,7 @@ description: Prepare and print local files from Codex on macOS/CUPS. Use when th
 - If printed output is garbled, do not send PDF directly. Convert the PDF to the printer-supported final format first, usually `image/urf` for IPP Everywhere printers.
 - Treat `.urf` files as temporary spool artifacts. Use `print-urf --cleanup` after submitting jobs unless you explicitly need to keep the URF for debugging or reprinting.
 - For wide or landscape content on fragile IPP/URF printers, do not assume a true landscape A4 PDF will print correctly. Prefer a portrait A4 PDF with the content rotated and scaled onto the page.
+- For URF jobs, do not rely on CUPS/printer copy handling for multiple copies. Use `print-urf --copies N`; the helper submits N independent one-copy jobs because some IPP printers ignore `lp -n N` for `image/urf`.
 - For lab-specific printers, import a local config with `import-config`. Do not commit printer IPs, queue names, or site-specific feed notes to the public skill.
 
 ## Quick Workflow
@@ -90,6 +91,18 @@ python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" print-urf --file 
 ```
 
 For unknown feed direction, tell the user to test with a two-page sample before printing a full document.
+
+## Multiple Copies
+
+For normal PDF jobs through `print`, `--copies N` maps to CUPS `lp -n N`.
+
+For URF jobs through `print-urf`, `--copies N` deliberately submits N separate one-copy jobs:
+
+```bash
+python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" print-urf --file "<path>.urf" --printer "<printer>" --copies 2 --cleanup --yes
+```
+
+Use `print-urf` for fragile IPP printers. Avoid manually adding `lp -n N` to URF commands; some printers accept the job but print only one physical copy.
 
 ## A4 Normalization
 

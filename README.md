@@ -18,6 +18,8 @@ The installer copies the skill to:
 $HOME/.codex/skills/print-file
 ```
 
+When updating an existing installation, `install.sh` preserves the installed `config/` directory.
+
 Restart Codex after installing or updating the skill so it can reload the skill list.
 
 ## Import Printer Config
@@ -70,6 +72,8 @@ python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" import-config --f
 
 Codex 会根据 skill 检查文件、选择打印机、必要时转换 URF，并在提交后清理 `.urf` 临时文件。
 
+如果要打印多份，直接说“打印两份/三份”。对于 URF 打印，skill 会自动拆成多个单份作业提交，避免部分 IPP 打印机忽略 `lp -n` 导致实际只出一份。
+
 ## For Other Agents
 
 If you are an AI agent using this repository:
@@ -81,6 +85,7 @@ If you are an AI agent using this repository:
 - Treat printing as a physical side effect. Use dry runs unless the user clearly asked to print.
 - For fragile IPP Everywhere printers, prefer `to-urf` followed by `print-urf --cleanup`.
 - For wide/landscape receipts that crop, use `normalize-a4-rotated-wide` before converting to URF.
+- For multiple URF copies, use `print-urf --copies N`; it submits N separate one-copy jobs because some printers ignore CUPS copy counts for `image/urf`.
 - For printers without automatic duplex, use the manual duplex workflow.
 
 ## Config Format
@@ -137,6 +142,12 @@ python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" to-urf --file inp
 python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" print-urf --file input_A4.urf --printer lab-hp --cleanup --yes
 ```
 
+Print multiple URF copies as separate physical jobs:
+
+```bash
+python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" print-urf --file input_A4.urf --printer lab-hp --copies 2 --cleanup --yes
+```
+
 Create manual duplex PDFs:
 
 ```bash
@@ -149,6 +160,7 @@ python3 "$HOME/.codex/skills/print-file/scripts/print_file.py" manual-duplex --f
 - A4 normalization for mixed or awkward page sizes.
 - URF conversion for IPP printers that garble direct PDFs.
 - Wide/landscape receipt handling to avoid right-side cropping.
+- Reliable multiple-copy URF printing by submitting separate one-copy jobs.
 - Manual duplex preparation for printers without automatic duplex.
 - Temporary `.urf` cleanup after job submission.
 
